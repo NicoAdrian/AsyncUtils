@@ -1,28 +1,22 @@
 import asyncio
-import concurrent.futures
 import logging
-import functools
+from functools import wraps, partial
 
 
-def periodic_callback(func, interval, args=None, kwargs=None):
+def periodic_callback(func, interval, *args, **kwargs):
     """
     Run awaitable object periodically
     """
-    if args is None:
-        args = []
-    if kwargs is None:
-        kwargs = {}
 
     async def do():
         while True:
             try:
+                await asyncio.sleep(interval)
                 await func(*args, **kwargs)
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logging.error(f"Error in periodic callback {func.__name__}: {e}")
-            finally:
-                await asyncio.sleep(interval)
+                logging.error(f"Error in periodic_callback '{func.__name__}': {e}")
 
     return asyncio.ensure_future(do())
 
@@ -32,11 +26,9 @@ def run_in_thread(f):
     decorator to run any blocking function in a separate thread
     """
 
-    @functools.wraps(f)
+    @wraps(f)
     async def wrapper(*args):
-        return await asyncio.get_event_loop().run_in_executor(
-            None, functools.partial(f, *args)
-        )
+        return await asyncio.get_event_loop().run_in_executor(None, partial(f, *args))
 
     return wrapper
 
