@@ -48,7 +48,7 @@ class Periodic:
             to_wait = self.interval - (time.time() - t0)
 
 
-def run_in_thread(f):
+def run_in_executor(f):
     """
     decorator to run any blocking function in an executor
     """
