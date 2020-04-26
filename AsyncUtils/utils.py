@@ -11,11 +11,11 @@ class Periodic:
         self._fut = None
 
     def start(self):
-        if self._fut is None:
+        if not self.is_running():
             self._fut = asyncio.ensure_future(self._run())
 
     def stop(self):
-        if self._fut is not None:
+        if self.is_running():
             asyncio.ensure_future(self._stop_fut())
 
     def is_running(self):
