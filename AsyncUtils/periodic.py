@@ -11,16 +11,16 @@ class PeriodicCallback:
         self._handle = None
 
     def start(self):
-        self._ioloop = asyncio.get_event_loop()
-        self._running = True
-        self._next_run = self._ioloop.time()
-        self._schedule_next()
+        if not self.is_running():
+            self._ioloop = asyncio.get_event_loop()
+            self._running = True
+            self._next_run = self._ioloop.time()
+            self._schedule_next()
 
     def stop(self):
-        self._running = False
-        if self._handle is not None:
+        if self.is_running():
             self._handle.cancel()
-            self._handle = None
+            self._running = False
 
     def _log_exc(self, ex):
         logging.error("Exception in periodic callback %s: %s", self.callback, ex)
@@ -35,8 +35,6 @@ class PeriodicCallback:
         return self._running
 
     def _run(self):
-        if not self.is_running():
-            return
         try:
             if self._is_coro:
                 asyncio.ensure_future(self._run_coro())
@@ -48,6 +46,5 @@ class PeriodicCallback:
             self._schedule_next()
 
     def _schedule_next(self):
-        if self.is_running():
-            self._handle = self._ioloop.call_at(self._next_run, self._run)
-            self._next_run += self.interval
+        self._handle = self._ioloop.call_at(self._next_run, self._run)
+        self._next_run += self.interval
